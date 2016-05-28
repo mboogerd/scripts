@@ -21,8 +21,13 @@ function listBranches() {
 }
 
 function createGitHubRepo() {
-	GITHUB_PAYLOAD={"name":"$PROJECT"}
-	curl -H "Authorization: token $GITHUB_PUBLIC_REPO_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$PROJECT\"}"
+	RESULT=`curl -sL -w "%{http_code}\\n" -H "Authorization: token $GITHUB_PUBLIC_REPO_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$PROJECT\"}" -o /dev/null`
+	if [ "$RESULT" -lt "400" ];then
+		echo "Github repo created successfully"
+	else
+		echo "Github repo creation failed with error code: $RESULT!"
+		exit 3
+	fi
 }
 
 # Retrieve program parameters
@@ -94,7 +99,7 @@ else
 		echo "Creating github repository"
 		createGitHubRepo
 		git remote add github git@github.com:$GITHUB_USERNAME/$PROJECT.git
-		git branch --set-upstream-to github master
+		# git branch --set-upstream-to=github/master
 	fi
 	
 	sbt dependencyUpdates
