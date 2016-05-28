@@ -91,10 +91,11 @@ else
 	git commit -am "Initial commit of project template"
 	
 	if [ "$CREATE_GITHUB_REPO" = true ]; then
+		echo "Creating github repository"
 		createGitHubRepo
 		git remote add github git@github.com:$GITHUB_USERNAME/$PROJECT.git
+		git branch --set-upstream-to github master
 	fi
 	
-	sbt depencendiesUpdateRecommended
-
+	sbt dependencyUpdates
 fi
