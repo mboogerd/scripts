@@ -33,10 +33,6 @@ while [ "$1" != "" ]; do
 	    BRANCH=$1
         shift
 	    ;;
-	-g | --create-github-repo )
-        shift
-	    CREATE_GITHUB_REPO=true
-	    ;;
 	-h | --help )
 	    shift
         usage
@@ -67,26 +63,10 @@ fi
 if [ -d "$PROJECT" ] && [ "$(ls -A $PROJECT)" ]; then
 	echo "Cannot create project, directory is already in use"
 else
-	echo "Cloning the template into the current folder"
+	echo "Cloning the template into the project folder"
 	git clone -b $BRANCH $REMOTE $PROJECT
+	rm -rf $PROJECT/.git
 
-	# re-create the git repo
-	cd $PROJECT
-	# First clear out the git data of the sbt-template repository
-	rm -rf .git
-	
-	if [ "$CREATE_GITHUB_REPO" = true ]; then
-		bash github-init.sh -n $PROJECT
-	else
-		echo "Creating new local git repository"
-		git init
-	fi
-	
-	echo "Creating your initial commit"
-	printf "# $PROJECT\nWrite me!" > README.md
-	git add .
-	git commit -am "Initial commit of project template"
-	
 	echo "Checking whether any of your dependencies can be updated"
 	sbt dependencyUpdates
 fi
