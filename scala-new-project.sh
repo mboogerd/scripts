@@ -12,7 +12,6 @@ REMOTE="git@github.com:mboogerd/sbt-template.git"
 # Functions
 function usage() {
     echo "usage: $0 -p [projectName] [-b branchName] | -h | -l"
-    exit 0
 }
 
 function listBranches() {
@@ -20,15 +19,6 @@ function listBranches() {
 	git ls-remote $REMOTE
 }
 
-function createGitHubRepo() {
-	RESULT=`curl -sL -w "%{http_code}\\n" -H "Authorization: token $GITHUB_PUBLIC_REPO_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$PROJECT\"}" -o /dev/null`
-	if [ "$RESULT" -lt "400" ];then
-		echo "Github repo created successfully"
-	else
-		echo "Github repo creation failed with error code: $RESULT!"
-		exit 3
-	fi
-}
 
 # Retrieve program parameters
 while [ "$1" != "" ]; do
@@ -68,13 +58,9 @@ if [ "x$BRANCH" = "x" ]; then
 	BRANCH="master"
 fi
 
-# preconditions for github repo creation
-if [ "$CREATE_GITHUB_REPO" = true ]; then
-	[ -z "$GITHUB_PUBLIC_REPO_TOKEN" ] && echo "Need to set GITHUB_PUBLIC_REPO_TOKEN environment variable in order to create a github repo" && exit 1;
-	[ -z "$GITHUB_USERNAME" ] && echo "Need to set GITHUB_USERNAME environment variable in order to create a github repo" && exit 1;
-	# TODO: Addtional checks:
-	# - Check whether repository exists already, and if so:
-	# - Check whether repository has size 0
+if [ "x$PROJECT" = "x" ]; then
+	usage
+	exit 1
 fi
 
 # Clone the template and give it the project name (but only if the project name is not a used directory)
@@ -86,21 +72,21 @@ else
 
 	# re-create the git repo
 	cd $PROJECT
-	echo "Creating new git repository"
+	# First clear out the git data of the sbt-template repository
 	rm -rf .git
-	git init
+	
+	if [ "$CREATE_GITHUB_REPO" = true ]; then
+		bash github-init.sh -n $PROJECT
+	else
+		echo "Creating new local git repository"
+		git init
+	fi
 	
 	echo "Creating your initial commit"
 	printf "# $PROJECT\nWrite me!" > README.md
 	git add .
 	git commit -am "Initial commit of project template"
 	
-	if [ "$CREATE_GITHUB_REPO" = true ]; then
-		echo "Creating github repository"
-		createGitHubRepo
-		git remote add github git@github.com:$GITHUB_USERNAME/$PROJECT.git
-		# git branch --set-upstream-to=github/master
-	fi
-	
+	echo "Checking whether any of your dependencies can be updated"
 	sbt dependencyUpdates
 fi
