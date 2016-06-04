@@ -68,5 +68,6 @@ else
 	rm -rf $PROJECT/.git
 
 	echo "Checking whether any of your dependencies can be updated"
+	cd $PROJECT
 	sbt dependencyUpdates
 fi
