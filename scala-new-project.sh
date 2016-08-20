@@ -65,7 +65,11 @@ if [ -d "$PROJECT" ] && [ "$(ls -A $PROJECT)" ]; then
 else
 	echo "Cloning the template into the project folder"
 	git clone -b $BRANCH $REMOTE $PROJECT
+
+	echo "Cleaning up template-y stuff"
 	rm -rf $PROJECT/.git
+	sed -i .bak "s/sbt-template/$PROJECT/g" $PROJECT/build.sbt
+	rm $PROJECT/build.sbt.bak
 
 	echo "Checking whether any of your dependencies can be updated"
 	cd $PROJECT
